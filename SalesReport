@@ -1,0 +1,202 @@
+package ilstu.edu;
+
+import java.io.*;
+
+public class SalesReport {
+
+	private String filename;
+	private double[][] sales = new double[100][];
+	private String[] salesPeople = new String[100];
+	private String[] salesCategories;
+
+	public SalesReport(String filename) {
+		this.filename = filename;
+	}
+
+	public void readFile() {
+
+		try {
+
+			BufferedReader reader = new BufferedReader(new FileReader(filename));
+			salesCategories = reader.readLine().split(",");
+			int i = 0;
+			String line;
+
+			while ((line = reader.readLine()) != null) {
+
+				String[] parts = line.split(",");
+				salesPeople[i] = parts[0];
+				sales[i] = new double[parts.length - 1];
+
+				for (int j = 1; j < parts.length; j++) {
+					sales[i][j - 1] = Double.parseDouble(parts[j]);
+				}
+				i++;
+			}
+			reader.close();
+		} catch (IOException | NumberFormatException e) {
+			System.out.println("An error occurred: " + e.getMessage());
+		}
+	}
+
+	public void showSP() {
+
+		System.out.println("Salespeople List:");
+		for (String salesperson : salesPeople) {
+
+			if (salesperson != null) {
+				System.out.println(salesperson);
+			}
+		}
+	}
+
+	private int spIndex(String spName) {
+
+		for (int i = 0; i < salesPeople.length; i++) {
+			if (spName.equalsIgnoreCase(salesPeople[i])) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public void writeFile(String spName) {
+
+		int spIndex = spIndex(spName);
+
+		if (spIndex != -1) {
+			try {
+
+				String fileName = spName + "_report.txt";
+				FileWriter writer = new FileWriter(fileName);
+				BufferedWriter bufferedWriter = new BufferedWriter(writer);
+				bufferedWriter.write("Salesperson's Name: " + spName + "\n");
+				bufferedWriter.write("Sales in each category:\n");
+
+				for (int i = 0; i < salesCategories.length && i < sales[spIndex].length; i++) {
+					bufferedWriter.write(salesCategories[i + 1] + ": $" + sales[spIndex][i] + "\n");
+				}
+
+				double totalSales = totalSales(sales[spIndex]);
+				bufferedWriter.write("Total Sales: $" + totalSales + "\n");
+				bufferedWriter.write("Rank in Total Sales: " + rank(spIndex) + "\n");
+
+				bufferedWriter.close();
+				System.out.println("Report saved as " + fileName);
+			} catch (IOException e) {
+				System.out.println("An error occurred: " + e.getMessage());
+			}
+		} else {
+			System.out.println("Who is that? (Not a valid salesperson's name)");
+		}
+
+	}
+
+	public void displayStatistics() {
+
+		double averageSale = averageSale();
+		double highestSale = highestSale();
+		double lowestSale = lowestSale();
+
+		System.out.println("Average Sale: $" + averageSale);
+		System.out.println("Highest Sale: $" + highestSale);
+		System.out.println("Lowest Sale: $" + lowestSale);
+	}
+
+	private double totalSales(double[] sales) {
+		double total = 0;
+
+		for (int i = 0; i < sales.length; i++) {
+			total += sales[i];
+		}
+
+		return total;
+	}
+
+	private double averageSale() {
+
+		double totalSales = 0;
+		int salespeopleCount = 0;
+
+		for (double[] salespersonSales : sales) {
+
+			if (salespersonSales != null) {
+				totalSales += totalSales(salespersonSales);
+				salespeopleCount++;
+			}
+		}
+
+		if (salespeopleCount == 0) {
+			return 0;
+		} else {
+			return totalSales / salespeopleCount;
+		}
+	}
+
+	private double highestSale() {
+
+		if (sales == null || sales.length == 0 || sales[0] == null) {
+			return 0;
+		}
+
+		double highestTotal = 0;
+
+		for (int i = 0; i < sales.length; i++) {
+
+			if (sales[i] != null) {
+				double curr = totalSales(sales[i]);
+
+				if (curr > highestTotal) {
+					highestTotal = curr;
+				}
+			}
+		}
+
+		return highestTotal;
+	}
+
+	private double lowestSale() {
+
+		if (sales == null || sales.length == 0 || sales[0] == null) {
+			return 0;
+		}
+
+		double lowestTotal = Double.MAX_VALUE;
+
+		for (int i = 0; i < sales.length; i++) {
+
+			if (sales[i] != null) {
+				double curr = totalSales(sales[i]);
+
+				if (curr < lowestTotal) {
+					lowestTotal = curr;
+				}
+			}
+		}
+
+		return lowestTotal;
+	}
+
+	private int rank(int spIndex) {
+
+		double spTotalSales = 0;
+
+		if (sales[spIndex] != null) {
+			spTotalSales = totalSales(sales[spIndex]);
+		}
+
+		int rank = 1;
+		for (int i = 0; i < sales.length; i++) {
+
+			if (i != spIndex && sales[i] != null) {
+				double otherTotalSales = totalSales(sales[i]);
+
+				if (otherTotalSales > spTotalSales) {
+					rank++;
+				}
+			}
+		}
+
+		return rank;
+	}
+}
